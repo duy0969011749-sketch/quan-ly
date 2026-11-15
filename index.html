@@ -51,7 +51,7 @@ header h1{font-size:26px;margin:0;font-weight:800;letter-spacing:-.03em}
 .quick input[type=text]{flex:1;min-width:0}
 .quick select{width:auto;flex:0 0 auto;max-width:42%}
 @media (max-width:599px){.quick.q3{flex-wrap:wrap}.quick.q3 input[type=text]{flex:1 1 100%}.quick.q3 select{flex:1 1 auto;max-width:none}}
-.cols .o1{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 14px 2px;margin-bottom:12px;box-shadow:var(--sh)}
+.cols .qbox{margin-top:16px;background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:14px 14px 2px;margin-bottom:12px;box-shadow:var(--sh)}
 input[type=text],input[type=password],input[type=date],input[type=datetime-local],select,textarea{background:var(--card);border:1px solid var(--line2);border-radius:12px;padding:10px 14px;min-height:44px;width:100%;font-size:16px;transition:border-color .15s,box-shadow .15s}
 input::placeholder,textarea::placeholder{color:#66728A}
 input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(37,99,235,.18)}
@@ -280,12 +280,34 @@ nav button.on::before{background:var(--accent)}
 @media (min-width:1400px){.cgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media (max-width:899px){nav button{font-size:11px;letter-spacing:-.01em;white-space:nowrap}nav button span{display:inline-flex;align-items:center}.bdg{margin-left:3px;min-width:16px;padding:0 4px;line-height:16px;font-size:10px}}
 @media (max-width:360px){nav button{font-size:10px}}
+header h1{flex:1;min-width:0}
+#hnew{min-height:40px}
+.upc{margin:-4px 0 20px}
+.upc .sec{margin-top:8px}
+.first .sec:first-child{margin-top:4px}
+.addbox{margin-top:28px;padding-top:20px;border-top:1px solid var(--line)}
+.addbox .hint{margin:10px 0 0}
+.empty + .addbox{border-top:0;margin-top:0;padding-top:0}
+.ngrid form{margin-bottom:8px}
+@media (min-width:900px){
+  nav{padding-bottom:16px}
+  nav button[data-tab=set]{margin-top:auto;position:relative}
+  nav button[data-tab=set]::after{content:"";position:absolute;left:0;right:0;top:-9px;border-top:1px solid var(--line)}
+  nav button[data-tab=dash]{margin-top:14px}
+  .cols .qbox{margin-top:20px}
+  .quick.q3{flex-wrap:wrap}.quick.q3 input[type=text]{flex:1 1 100%}.quick.q3 select{flex:1 1 auto;max-width:none}
+  .upc{max-width:640px}
+  .ngrid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.3fr);gap:48px;align-items:start}
+  .ngrid form{position:sticky;top:24px}
+  .ngrid .sec:first-child{margin-top:0}
+}
 </style>
 </head>
 <body>
 <header>
   <h1>Công việc</h1>
   <div id="sync"></div>
+  <button class="btn small" id="hnew" data-act="hnew">Thêm mới</button>
 </header>
 <div class="wrap">
   <div id="datebar">
@@ -298,10 +320,10 @@ nav button.on::before{background:var(--accent)}
 </div>
 <nav id="nav">
   <button data-tab="work">Công việc</button>
-  <button data-tab="proj">Dự án</button>
-  <button data-tab="dash">Thống kê</button>
   <button data-tab="cust">Khách hàng</button>
+  <button data-tab="proj">Dự án</button>
   <button data-tab="notes">Ghi chú</button>
+  <button data-tab="dash">Thống kê</button>
   <button data-tab="set">Cài đặt</button>
 </nav>
 <div id="sheet"><div class="panel" id="panel"></div></div>
@@ -427,7 +449,7 @@ function foldHead(name,n,key,cap,open,lbls){
 function viewDay(){
   var d=ui.cur, list=sortTasks(tasksOn(d));
   var timed=list.filter(timedOf), untimed=list.filter(function(t){ return !timedOf(t); });
-  var q='<div class="o1"><form class="quick q3" data-form="quick">'+
+  var q='<div class="o4 qbox"><form class="quick q3" data-form="quick">'+
     '<input type="text" id="q_title" data-keep placeholder="Việc mới" aria-label="Việc mới" autocomplete="off" enterkeyhint="done">'+
     '<select id="q_prio" data-keep aria-label="Ưu tiên">'+prioOptions(2)+'</select>'+
     '<button class="btn" type="submit">Thêm mới</button></form>'+
@@ -436,7 +458,7 @@ function viewDay(){
   var ad='<div class="o2 fold cap'+(adOpen?' open':'')+'">'+foldHead('Cả ngày',untimed.length,'ad',true,adOpen,['Xem hết','Thu gọn'])+
     '<div class="fl">'+(untimed.length?untimed.map(function(t){return taskHtml(t);}).join(''):'<div class="empty">Trống</div>')+'</div></div>';
   var old=d===today()?sortTasks(tasks().filter(function(t){ return !t.done && t.date<d; })):[], tonOpen=!!ui.fold.ton;
-  var ton=old.length?'<div class="o4 fold hide'+(tonOpen?' open':'')+'">'+foldHead('Tồn đọng',old.length,'ton',false,tonOpen,['Xem thêm','Ẩn bớt'])+
+  var ton=old.length?'<div class="o1 fold cap'+(tonOpen?' open':'')+'">'+foldHead('Tồn đọng',old.length,'ton',true,tonOpen,['Xem hết','Thu gọn'])+
     '<div class="fl">'+old.map(function(t){return taskHtml(t,true);}).join('')+'</div></div>':'';
 
   var lo=6, hi=23;
@@ -460,7 +482,7 @@ function viewDay(){
   if(d===today()){ var n0=new Date(), ny=(n0.getHours()+n0.getMinutes()/60-lo)*HOUR;
     if(ny>=0 && ny<=H) now='<div class="nowln" id="nowline" data-lo="'+lo+'" data-t="'+pad(n0.getHours())+':'+pad(n0.getMinutes())+'" style="top:'+ny.toFixed(1)+'px"></div>'; }
   var tl='<div class="o3 tlwrap" id="tlwrap" data-y8="'+Math.max(0,(7-lo)*HOUR)+'"><div class="tl" style="height:'+(H+24)+'px">'+rows+'<div class="evs">'+evh+'</div>'+now+'</div></div>';
-  return '<div class="cols"><div>'+tl+'</div><div>'+q+ad+ton+'</div></div>';
+  return '<div class="cols"><div>'+tl+'</div><div>'+ton+ad+q+'</div></div>';
 }
 function afterDay(prev){
   var w=document.getElementById('tlwrap'); if(!w) return;
@@ -515,22 +537,25 @@ function viewProj(){
       '<details><summary>Chỉnh sửa</summary><form data-form="projrename" class="quick"><input type="text" id="pr_name" data-keep value="'+esc(p.title)+'" aria-label="Tên dự án"><button class="btn ghost" type="submit">Lưu lại</button></form>'+
       '<div class="row"><button class="btn danger" type="button" data-act="delproj" data-id="'+p.id+'">Xóa dự án</button></div></details></div>'+
       '<button class="btn" data-act="new" data-p="'+p.id+'">Thêm việc</button>';
-    STATUS.forEach(function(x){
+    [STATUS[1],STATUS[0],STATUS[2]].forEach(function(x){
       var ll=l.filter(function(t){return st(t)===x[0];});
       if(ll.length) h+=secHtml(x[1],ll.length)+ll.map(function(t){return taskHtml(t,true);}).join('');
     });
     return h;
   }
   ui.openProj=null;
-  var ps=all('project').sort(function(a,b){return a.createdAt-b.createdAt;});
-  h='<form class="quick" data-form="proj" style="margin-bottom:24px"><input type="text" id="p_name" data-keep placeholder="Dự án mới" aria-label="Dự án mới" autocomplete="off"><button class="btn" type="submit">Tạo mới</button></form>';
-  h='<div class="narrow">'+h+'</div>';
-  h+=ps.length?'<div class="pgrid">'+ps.map(function(p){
-    var g=progOf(tk.filter(function(t){return t.projectId===p.id;}));
+  var G={}; all('project').forEach(function(p){ G[p.id]=progOf(tk.filter(function(t){return t.projectId===p.id;})); });
+  var ps=all('project').sort(function(a,b){
+    var ga=G[a.id], gb=G[b.id], fa=ga.total&&ga.pct===100?1:0, fb=gb.total&&gb.pct===100?1:0;
+    return (fa-fb)||(gb.od-ga.od)||(a.createdAt-b.createdAt); });
+  var pf='<form class="quick" data-form="proj"><input type="text" id="p_name" data-keep placeholder="Dự án mới" aria-label="Dự án mới" autocomplete="off"><button class="btn ghost" type="submit">Tạo mới</button></form>';
+  pf='<div class="narrow addbox">'+pf+'</div>';
+  h=ps.length?'<div class="pgrid">'+ps.map(function(p){
+    var g=G[p.id];
     return '<button class="proj" data-act="openproj" data-id="'+p.id+'"><div class="pn"><span>'+esc(p.title)+'</span><span>'+g.pct+'%</span></div>'+
       '<div class="bar"><i style="width:'+g.pct+'%"></i></div><div class="pm">'+g.done+'/'+g.total+(g.od?' &middot; <span class="od">'+g.od+' trễ hạn</span>':'')+'</div></button>';
   }).join('')+'</div>':'<div class="empty">Chưa có dự án</div>';
-  return h;
+  return h+pf;
 }
 function kpi(list){
   var g=progOf(list), now=Date.now(), onTime=0, late=0;
@@ -584,10 +609,10 @@ function prioBlock(list){
 function statBlock(list){
   var g=progOf(list);
   return '<div class="stats">'+
-    '<div class="stat"><div class="v">'+g.total+'</div><div class="k">Tổng số</div></div>'+
-    '<div class="stat"><div class="v">'+g.done+'</div><div class="k">Hoàn thành</div></div>'+
+    '<div class="stat'+(g.od?' warn':'')+'"><div class="v">'+g.od+'</div><div class="k">Quá hạn</div></div>'+
     '<div class="stat"><div class="v">'+list.filter(function(t){return st(t)==='doing';}).length+'</div><div class="k">Đang làm</div></div>'+
-    '<div class="stat'+(g.od?' warn':'')+'"><div class="v">'+g.od+'</div><div class="k">Quá hạn</div></div></div>';
+    '<div class="stat"><div class="v">'+g.done+'</div><div class="k">Hoàn thành</div></div>'+
+    '<div class="stat"><div class="v">'+g.total+'</div><div class="k">Tổng số</div></div></div>';
 }
 function dayChart(s){
   var days=[],max=1,i;
@@ -619,34 +644,34 @@ function trendChart(s){
 function upcomingBlock(){
   var lim=Date.now()+48*3600*1000;
   var up=tasks().filter(function(t){ if(t.done||!t.deadline) return false; return new Date(t.deadline).getTime()<=lim; });
-  up.sort(function(a,b){ return a.deadline>b.deadline?-1:1; });
+  up.sort(function(a,b){ return a.deadline<b.deadline?-1:1; });
   return up.length?secHtml('Sắp hạn',up.length)+up.slice(0,6).map(function(t){return taskHtml(t,true);}).join('')+(up.length>6?'<div class="empty">+'+(up.length-6)+' việc khác</div>':''):'';
 }
 function viewDash(){
   var h='<div class="seg"><button data-act="dash" data-m="day" class="'+(ui.dash==='day'?'on':'')+'">Hằng ngày</button>'+
-        '<button data-act="dash" data-m="week" class="'+(ui.dash==='week'?'on':'')+'">Hằng tuần</button></div>', list;
+        '<button data-act="dash" data-m="week" class="'+(ui.dash==='week'?'on':'')+'">Hằng tuần</button></div>', list, ub=upcomingBlock(), up=ub?'<div class="upc">'+ub+'</div>':'';
   if(ui.dash==='day'){
     list=tasksOn(ui.cur);
-    h+=statBlock(list)+'<div class="dgrid">'+kpiBlock(list)+donutBlock(list);
+    h+=statBlock(list)+up+'<div class="dgrid">'+kpiBlock(list)+donutBlock(list);
   }else{
     var s=weekStart(ui.cur), e=addDays(s,6);
     list=tasks().filter(function(t){ return t.date>=s && t.date<=e; });
-    h+=statBlock(list)+'<div class="dgrid">'+kpiBlock(list)+donutBlock(list)+dayChart(s)+trendChart(s);
+    h+=statBlock(list)+up+'<div class="dgrid">'+kpiBlock(list)+donutBlock(list)+dayChart(s)+trendChart(s);
   }
-  return h+prioBlock(list)+projBlock(list)+'</div><div class="narrow">'+upcomingBlock()+'</div>';
+  return h+prioBlock(list)+projBlock(list)+'</div>';
 }
 
 function viewNotes(){
   var list=all('note').sort(function(a,b){return b.createdAt-a.createdAt;});
-  var h='<div class="narrow"><form data-form="note"><textarea id="n_text" data-keep placeholder="Ghi chú" aria-label="Ghi chú"></textarea>'+
-    '<div class="row"><button class="btn" type="submit">Lưu lại</button></div></form>';
-  if(list.length) h+=secHtml('Đã lưu',list.length);
+  var h='<div class="ngrid"><form data-form="note"><textarea id="n_text" data-keep placeholder="Ghi chú" aria-label="Ghi chú"></textarea>'+
+    '<div class="row"><button class="btn" type="submit">Lưu lại</button></div></form><div>';
+  h+=list.length?secHtml('Đã lưu',list.length):'<div class="empty">Chưa có ghi chú</div>';
   h+=list.map(function(n){
     return '<div class="note"><div class="tx">'+esc(n.title)+'</div><div class="ft"><span class="tmn">'+fmtTime(n.createdAt)+' '+fmtShort(ymd(new Date(n.createdAt)))+'</span>'+
       '<span><button class="link" data-act="note2task" data-id="'+n.id+'">Thành việc</button>'+
       '<button class="link od" data-act="delnote" data-id="'+n.id+'">Xóa bỏ</button></span></div></div>';
   }).join('');
-  return h+'</div>';
+  return h+'</div></div>';
 }
 
 
@@ -679,15 +704,15 @@ function custHtml(c){
     (l!==null?'<button class="btn small'+(due?'':' ghost')+'" data-act="contacted" data-id="'+c.id+'">Liên hệ</button>':'')+'</div></div>';
 }
 function viewCust(){
-  var list=all('customer'), h='<div class="narrow"><form class="quick" data-form="custq" style="margin-bottom:8px">'+
-    '<input type="text" id="c_name" data-keep placeholder="Khách hàng mới" aria-label="Khách hàng mới" autocomplete="off"><button class="btn" type="submit">Thêm mới</button></form>'+
+  var list=all('customer'), f='<div class="narrow addbox"><form class="quick" data-form="custq">'+
+    '<input type="text" id="c_name" data-keep placeholder="Khách hàng mới" aria-label="Khách hàng mới" autocomplete="off"><button class="btn ghost" type="submit">Thêm mới</button></form>'+
     '<p class="hint">Nhắc liên hệ tối thiểu mỗi '+CYCLE+' ngày.</p></div>';
-  if(!list.length) return h+'<div class="empty">Chưa có khách hàng</div>';
+  if(!list.length) return '<div class="empty">Chưa có khách hàng</div>'+f;
   var act=list.filter(cActive).sort(function(a,b){ return cLeft(a)-cLeft(b); }),
       due=act.filter(function(c){return cLeft(c)<=0;}), soon=act.filter(function(c){return cLeft(c)>0;}),
       off=list.filter(function(c){return !cActive(c);}).sort(function(a,b){return (b.updatedAt||0)-(a.updatedAt||0);});
   function blk(name,l){ return l.length?secHtml(name,l.length)+'<div class="cgrid">'+l.map(custHtml).join('')+'</div>':''; }
-  return h+blk('Cần gọi',due)+blk('Sắp tới',soon)+blk('Kết thúc',off);
+  return '<div class="first">'+blk('Cần gọi',due)+blk('Sắp tới',soon)+'</div>'+f+blk('Kết thúc',off);
 }
 var editC=null;
 function openCust(c){
@@ -752,7 +777,7 @@ function viewSet(){
   h+='<div class="card"><h2>Nhắc nhở</h2><p class="hint">Thông báo: '+notiStatus()+'</p>'+
     '<div class="row" style="margin-top:0"><button class="btn ghost" data-act="askNoti">Bật lên</button><button class="btn ghost" data-act="testNoti">Thử nghiệm</button></div>'+
     '<details><summary>Lưu ý</summary><p>Nhắc nhở chỉ hoạt động khi app đang mở.</p></details></div>';
-  h+='<div class="card"><h2>Dữ liệu</h2><p class="hint">'+all('task').length+' việc &middot; '+all('project').length+' dự án &middot; '+all('note').length+' ghi chú</p>'+
+  h+='<div class="card"><h2>Dữ liệu</h2><p class="hint">'+all('task').length+' việc &middot; '+all('project').length+' dự án &middot; '+all('note').length+' ghi chú &middot; '+all('customer').length+' khách hàng</p>'+
     '<div class="row" style="margin-top:0"><button class="btn ghost" data-act="export">Xuất file</button><button class="btn ghost" data-act="import">Nhập file</button></div>'+
     '<input type="file" id="s_file" accept="application/json,.json" style="display:none"></div></div>';
   return h;
@@ -764,6 +789,7 @@ function render(){
   if(actId && keep.hasOwnProperty(actId)){ try{ selS=act.selectionStart; selE=act.selectionEnd; }catch(e){} }
 
   document.querySelector('header h1').textContent=TITLES[ui.tab]||'Công việc';
+  document.getElementById('hnew').style.display=(ui.tab==='work'||ui.tab==='cust'||ui.tab==='proj')?'':'none';
   var showBar=(ui.tab==='work'||ui.tab==='dash');
   $datebar.style.display=showBar?'flex':'none';
   var weekMode=weekStep();
@@ -879,6 +905,11 @@ document.addEventListener('click',function(e){
       break;
     case 'edit': if(it) openForm(it); break;
     case 'editc': if(it) openCust(it); break;
+    case 'hnew':
+      if(ui.tab==='cust') openCust(null);
+      else if(ui.tab==='proj' && !ui.openProj){ var pi=document.getElementById('p_name'); if(pi){ pi.scrollIntoView({block:'center'}); pi.focus(); } }
+      else openForm(null,ui.tab==='work'?ui.cur:today(),ui.tab==='proj'?ui.openProj:'');
+      break;
     case 'gocust': ui.tab='cust'; render(); window.scrollTo(0,0); break;
     case 'contacted': if(it) markContacted(it,''); break;
     case 'logc':
