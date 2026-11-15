@@ -258,6 +258,26 @@ nav button.on::before{background:var(--accent)}
   .dgrid{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 
+
+.alert{display:flex;justify-content:space-between;align-items:center;width:100%;min-height:48px;padding:0 16px;margin-bottom:14px;background:var(--danger-soft);border:1px solid #FECACA;border-radius:12px;color:var(--danger);font-size:14px;text-align:left}
+.alert b{font-weight:700}.alert span{font-weight:700;text-decoration:underline}
+.bdg{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:999px;background:var(--danger);color:#fff;font-size:11px;font-weight:700;line-height:18px;text-align:center}
+.cgrid{display:block}
+.cust{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:12px;margin-bottom:8px;padding:6px 12px 6px 4px}
+.cust.due{border-color:#FECACA;background:#FFFBFB}
+.cust.off{opacity:.7}
+.cb{flex:1;min-width:0;background:none;border:0;text-align:left;padding:8px 10px;min-height:56px;display:flex;flex-direction:column;gap:2px}
+.cn{font-weight:700;overflow-wrap:anywhere}
+.cs{font-size:13px;color:var(--muted)}
+.ci{font-size:13px;color:var(--muted);font-variant-numeric:tabular-nums}
+.ca{display:flex;align-items:center;gap:12px;flex:0 0 auto}
+.ca .link{display:inline-flex;align-items:center}
+.clog{margin-top:14px;border-top:1px solid var(--line)}
+.clog div{padding:8px 0;border-bottom:1px solid var(--line);font-size:14px;overflow-wrap:anywhere}
+.clog span{display:inline-block;min-width:48px;color:var(--muted);font-size:13px;font-weight:600}
+@media (max-width:420px){.cust{flex-wrap:wrap}.ca{width:100%;justify-content:flex-end;padding:0 0 6px}}
+@media (min-width:900px){.cgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.cgrid .cust{margin-bottom:0}}
+@media (min-width:1400px){.cgrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -278,6 +298,7 @@ nav button.on::before{background:var(--accent)}
   <button data-tab="work">Việc</button>
   <button data-tab="proj">Dự án</button>
   <button data-tab="dash">Thống kê</button>
+  <button data-tab="cust">Khách</button>
   <button data-tab="notes">Ghi chú</button>
   <button data-tab="set">Cài đặt</button>
 </nav>
@@ -294,7 +315,7 @@ var GIST_FILE='quan-ly-cong-viec-data.json';
 var PRIO=['Khẩn cấp','Cao','Trung bình','Thấp'];
 var DOW=['Chủ nhật','Thứ 2','Thứ 3','Thứ 4','Thứ 5','Thứ 6','Thứ 7'];
 var DOW_S=['CN','T2','T3','T4','T5','T6','T7'];
-var TITLES={work:'Công việc',proj:'Dự án',dash:'Thống kê',notes:'Ghi chú',set:'Cài đặt'};
+var TITLES={work:'Công việc',proj:'Dự án',cust:'Khách hàng',dash:'Thống kê',notes:'Ghi chú',set:'Cài đặt'};
 var STATUS=[['todo','Chưa làm'],['doing','Đang làm'],['done','Hoàn thành']];
 var PCOLOR=['#18181b'];
 var REMIND=[['','Không nhắc'],['0','Đúng giờ'],['10','Trước 10 phút'],['30','Trước 30 phút'],['60','Trước 1 giờ'],['180','Trước 3 giờ'],['1440','Trước 1 ngày']];
@@ -478,7 +499,8 @@ function viewBoard(){
 function viewWork(){
   var h='<div class="seg">'+[['day','Ngày'],['week','Tuần'],['board','Bảng']].map(function(m){
     return '<button data-act="mode" data-m="'+m[0]+'" class="'+(ui.mode===m[0]?'on':'')+'">'+m[1]+'</button>'; }).join('')+'</div>';
-  return h+(ui.mode==='day'?viewDay():ui.mode==='week'?viewWeek():viewBoard());
+  var dn=dueCount(), bn=dn?'<button class="alert" data-act="gocust"><b>'+dn+' khách cần liên hệ</b><span>Xem</span></button>':'';
+  return bn+h+(ui.mode==='day'?viewDay():ui.mode==='week'?viewWeek():viewBoard());
 }
 function progOf(l){ var d=l.filter(function(t){return t.done;}).length; return {total:l.length,done:d,pct:l.length?Math.round(d*100/l.length):0,od:l.filter(isOverdue).length}; }
 function viewProj(){
@@ -625,6 +647,90 @@ function viewNotes(){
   return h+'</div>';
 }
 
+
+/* ---------- Khach hang ---------- */
+var CSTAT=[['lead','Tiềm năng'],['care','Đang chăm sóc'],['won','Đã chốt'],['lost','Tạm dừng']];
+var CYCLE=7;
+function cLabel(v){ for(var i=0;i<CSTAT.length;i++) if(CSTAT[i][0]===v) return CSTAT[i][1]; return ''; }
+function cActive(c){ return c.status!=='won' && c.status!=='lost'; }
+function dayDiff(a,b){ return Math.round((parseYmd(a)-parseYmd(b))/86400000); }
+function cLeft(c){
+  if(!cActive(c)) return null;
+  var base=c.lastContact||ymd(new Date(c.createdAt||Date.now()));
+  return dayDiff(addDays(base,CYCLE),today());
+}
+function dueCount(){ return all('customer').filter(function(c){ var l=cLeft(c); return l!==null && l<=0; }).length; }
+function cInfo(c){
+  var l=cLeft(c), last=c.lastContact?('Liên hệ '+fmtShort(c.lastContact)):'Chưa liên hệ';
+  if(l===null) return last;
+  if(l<0) return last+' &middot; <span class="od">Trễ '+(-l)+' ngày</span>';
+  if(l===0) return last+' &middot; <span class="od">Hôm nay</span>';
+  return last+' &middot; còn '+l+' ngày';
+}
+function custHtml(c){
+  var l=cLeft(c), due=(l!==null&&l<=0);
+  return '<div class="cust'+(due?' due':'')+(l===null?' off':'')+'">'+
+    '<button class="cb" data-act="editc" data-id="'+c.id+'"><span class="cn">'+esc(c.title)+'</span>'+
+    '<span class="cs">'+(c.company?esc(c.company)+' &middot; ':'')+cLabel(c.status)+'</span>'+
+    '<span class="ci">'+cInfo(c)+'</span></button>'+
+    '<div class="ca">'+(c.phone?'<a class="link" href="tel:'+esc(c.phone)+'">Gọi</a>':'')+
+    (l!==null?'<button class="btn small'+(due?'':' ghost')+'" data-act="contacted" data-id="'+c.id+'">Đã liên hệ</button>':'')+'</div></div>';
+}
+function viewCust(){
+  var list=all('customer'), h='<div class="narrow"><form class="quick" data-form="custq" style="margin-bottom:8px">'+
+    '<input type="text" id="c_name" data-keep placeholder="Khách hàng mới" aria-label="Khách hàng mới" autocomplete="off"><button class="btn" type="submit">Thêm</button></form>'+
+    '<p class="hint">Nhắc liên hệ tối thiểu mỗi '+CYCLE+' ngày.</p></div>';
+  if(!list.length) return h+'<div class="empty">Chưa có khách hàng</div>';
+  var act=list.filter(cActive).sort(function(a,b){ return cLeft(a)-cLeft(b); }),
+      due=act.filter(function(c){return cLeft(c)<=0;}), soon=act.filter(function(c){return cLeft(c)>0;}),
+      off=list.filter(function(c){return !cActive(c);}).sort(function(a,b){return (b.updatedAt||0)-(a.updatedAt||0);});
+  function blk(name,l){ return l.length?secHtml(name,l.length)+'<div class="cgrid">'+l.map(custHtml).join('')+'</div>':''; }
+  return h+blk('Cần liên hệ',due)+blk('Sắp tới',soon)+blk('Đã chốt / Tạm dừng',off);
+}
+var editC=null;
+function openCust(c){
+  editC=c?c.id:null; editId=editC; delArmed=false;
+  var v=c||{title:'',company:'',phone:'',note:'',status:'lead'};
+  var logs=(c&&c.log||[]).slice().sort(function(a,b){return b.t-a.t;}).slice(0,6);
+  $panel.innerHTML='<h2>'+(c?'Sửa khách hàng':'Khách hàng mới')+'</h2><form data-form="cust">'+
+    '<label for="c_t">Tên</label><input type="text" id="c_t" value="'+esc(v.title)+'" autocomplete="off">'+
+    '<div class="two"><div><label for="c_co">Công ty</label><input type="text" id="c_co" value="'+esc(v.company)+'" autocomplete="off"></div>'+
+    '<div><label for="c_ph">Điện thoại</label><input type="text" id="c_ph" inputmode="tel" value="'+esc(v.phone)+'" autocomplete="off"></div></div>'+
+    '<label for="c_st">Trạng thái</label><select id="c_st">'+CSTAT.map(function(x){ return '<option value="'+x[0]+'"'+(v.status===x[0]?' selected':'')+'>'+x[1]+'</option>'; }).join('')+'</select>'+
+    '<label for="c_no">Ghi chú</label><textarea id="c_no">'+esc(v.note)+'</textarea>'+
+    (c?'<label for="c_lg">Nhật ký liên hệ</label><textarea id="c_lg" placeholder="Nội dung lần liên hệ này"></textarea>'+
+      '<div class="row" style="margin-top:8px"><button class="btn ghost small" type="button" data-act="logc">Ghi liên hệ hôm nay</button></div>'+
+      (logs.length?'<div class="clog">'+logs.map(function(g){ return '<div><span>'+fmtShort(ymd(new Date(g.t)))+'</span>'+esc(g.x||'Đã liên hệ')+'</div>'; }).join('')+'</div>':''):'')+
+    '<div class="err" id="c_err"></div>'+
+    '<div class="row"><button class="btn" type="submit">Lưu</button><button class="btn ghost" type="button" data-act="close">Hủy</button>'+
+    (c?'<button class="btn danger" type="button" data-act="del" id="f_del">Xóa</button>':'')+'</div></form>';
+  $sheet.className='open';
+  if(!c) setTimeout(function(){ var el=document.getElementById('c_t'); if(el) el.focus(); },50);
+}
+function markContacted(c,text){
+  c.lastContact=today(); c.log=(c.log||[]).concat([{t:Date.now(),x:text||''}]);
+  if(c.status==='lead') c.status='care';
+  commit(c);
+}
+function saveCust(){
+  var t=document.getElementById('c_t').value.trim(), err=document.getElementById('c_err');
+  if(!t){ err.textContent='Cần nhập tên.'; return; }
+  var o={title:t,company:document.getElementById('c_co').value.trim(),phone:document.getElementById('c_ph').value.trim(),
+    note:document.getElementById('c_no').value.trim(),status:document.getElementById('c_st').value};
+  if(editC && items[editC]){ var c=items[editC]; for(var k in o) c[k]=o[k]; closeForm(); commit(c); }
+  else { o.id=uid(); o.type='customer'; o.lastContact=''; o.log=[]; o.createdAt=Date.now(); closeForm(); commit(o); }
+}
+function checkCustomers(){
+  var now=Date.now(), ch=false;
+  all('customer').forEach(function(c){
+    var l=cLeft(c); if(l===null||l>0) return;
+    var key='c|'+c.id+'|'+today(); if(notified[key]) return;
+    notified[key]=now; ch=true;
+    notify('Liên hệ khách: '+c.title,l<0?('Trễ '+(-l)+' ngày'):'Đến hạn hôm nay',c.id);
+  });
+  return ch;
+}
+
 function notiStatus(){
   if(!('Notification' in window)) return 'Trình duyệt không hỗ trợ';
   if(Notification.permission==='granted') return 'Đã bật';
@@ -667,13 +773,15 @@ function render(){
   else $datelbl.textContent=(ui.cur===today()?'Hôm nay':DOW[parseYmd(ui.cur).getDay()])+', '+fmtShort(ui.cur);
 
   var tw0=document.getElementById('tlwrap'), tws=tw0?tw0.scrollTop:null;
-  $view.innerHTML = ui.tab==='work'?viewWork(): ui.tab==='proj'?viewProj(): ui.tab==='dash'?viewDash(): ui.tab==='notes'?viewNotes(): viewSet();
+  $view.innerHTML = ui.tab==='work'?viewWork(): ui.tab==='proj'?viewProj(): ui.tab==='dash'?viewDash(): ui.tab==='cust'?viewCust(): ui.tab==='notes'?viewNotes(): viewSet();
   afterDay(tws);
 
   for(var id in keep){ var el=document.getElementById(id); if(el) el.value=keep[id]; }
   if(actId && keep.hasOwnProperty(actId)){ var a=document.getElementById(actId); if(a){ a.focus(); try{ if(selS!=null) a.setSelectionRange(selS,selE); }catch(e){} } }
 
   Array.prototype.forEach.call(document.querySelectorAll('#nav button'),function(b){ b.className=(b.getAttribute('data-tab')===ui.tab)?'on':''; });
+  var cb=document.querySelector('#nav [data-tab=cust]'), dn=dueCount();
+  if(cb) cb.innerHTML='<span>Khách'+(dn?' <b class="bdg">'+dn+'</b>':'')+'</span>';
   renderSync();
 }
 function renderSync(){
@@ -737,6 +845,10 @@ document.addEventListener('submit',function(e){
     commit({id:uid(),type:'project',title:pv,color:PCOLOR[all('project').length%PCOLOR.length],createdAt:Date.now()});
   }else if(f==='projrename'){
     var rn=document.getElementById('pr_name').value.trim(), pp=items[ui.openProj]; if(rn&&pp){ pp.title=rn; commit(pp); }
+  }else if(f==='custq'){
+    var cn=document.getElementById('c_name'), cv=cn.value.trim(); if(!cv) return; cn.value='';
+    commit({id:uid(),type:'customer',title:cv,company:'',phone:'',note:'',status:'lead',lastContact:'',log:[],createdAt:Date.now()});
+  }else if(f==='cust'){ saveCust();
   }else if(f==='task'){ saveForm(); }
 });
 
@@ -764,6 +876,12 @@ document.addEventListener('click',function(e){
       if(b.getAttribute('data-armed')){ ui.openProj=null; removeItem(id); } else { b.setAttribute('data-armed','1'); b.textContent='Xóa thật?'; }
       break;
     case 'edit': if(it) openForm(it); break;
+    case 'editc': if(it) openCust(it); break;
+    case 'gocust': ui.tab='cust'; render(); window.scrollTo(0,0); break;
+    case 'contacted': if(it) markContacted(it,''); break;
+    case 'logc':
+      if(editC && items[editC]){ var lg=document.getElementById('c_lg'), lv=lg?lg.value.trim():''; closeForm(); markContacted(items[editC],lv); }
+      break;
     case 'new': openForm(null,b.getAttribute('data-d')||ui.cur,b.getAttribute('data-p')||''); break;
     case 'close': closeForm(); break;
     case 'del':
@@ -830,7 +948,7 @@ function askNoti(){
   }catch(e){ render(); }
 }
 function checkReminders(){
-  var now=Date.now(), changed=false;
+  var now=Date.now(), changed=checkCustomers();
   all('task').forEach(function(t){
     if(t.done || !t.deadline || t.remind==='' || t.remind==null) return;
     var dl=new Date(t.deadline).getTime(); if(isNaN(dl)) return;
