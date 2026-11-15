@@ -339,6 +339,7 @@ input[type=date]::-webkit-date-and-time-value,input[type=datetime-local]::-webki
 input::-webkit-datetime-edit{padding:0}
 #sheet select{min-width:0;max-width:100%;text-overflow:ellipsis}
 #sheet .panel{overflow-x:hidden}
+input[type=date],input[type=datetime-local]{white-space:nowrap;overflow:hidden}
 </style>
 </head>
 <body>
@@ -889,10 +890,10 @@ function openForm(t,defDate,defProj,defDl){
     '<label for="f_note">Ghi chú</label><textarea id="f_note">'+esc(v.note)+'</textarea>'+
     '<div class="two"><div><label for="f_date">Ngày làm</label><input type="date" id="f_date" value="'+esc(v.date)+'"></div>'+
     '<div><label for="f_prio">Ưu tiên</label><select id="f_prio">'+prioOptions(v.prio)+'</select></div></div>'+
-    '<div class="two"><div><label for="f_dl">Hạn chót</label><input type="datetime-local" id="f_dl" value="'+esc(v.deadline)+'"></div>'+
-    '<div><label for="f_rm">Nhắc nhở</label><select id="f_rm">'+REMIND.map(function(r){ return '<option value="'+r[0]+'"'+(String(v.remind)===r[0]?' selected':'')+'>'+r[1]+'</option>'; }).join('')+'</select></div></div>'+
-    '<div class="two"><div><label for="f_st">Trạng thái</label><select id="f_st">'+STATUS.map(function(x){ return '<option value="'+x[0]+'"'+(cs===x[0]?' selected':'')+'>'+x[1]+'</option>'; }).join('')+'</select></div>'+
-    '<div><label for="f_pj">Dự án</label><select id="f_pj"><option value="">Không có</option>'+ps.map(function(p){ return '<option value="'+p.id+'"'+(v.projectId===p.id?' selected':'')+'>'+esc(p.title)+'</option>'; }).join('')+'</select></div></div>'+
+    '<label for="f_dl">Hạn chót</label><input type="datetime-local" id="f_dl" value="'+esc(v.deadline)+'">'+
+    '<div class="two"><div><label for="f_rm">Nhắc nhở</label><select id="f_rm">'+REMIND.map(function(r){ return '<option value="'+r[0]+'"'+(String(v.remind)===r[0]?' selected':'')+'>'+r[1]+'</option>'; }).join('')+'</select></div>'+
+    '<div><label for="f_st">Trạng thái</label><select id="f_st">'+STATUS.map(function(x){ return '<option value="'+x[0]+'"'+(cs===x[0]?' selected':'')+'>'+x[1]+'</option>'; }).join('')+'</select></div></div>'+
+    '<label for="f_pj">Dự án</label><select id="f_pj"><option value="">Không có</option>'+ps.map(function(p){ return '<option value="'+p.id+'"'+(v.projectId===p.id?' selected':'')+'>'+esc(p.title)+'</option>'; }).join('')+'</select>'+
     '<div class="err" id="f_err"></div>'+
     '<div class="row"><button class="btn" type="submit">Lưu lại</button><button class="btn ghost" type="button" data-act="close">Hủy bỏ</button>'+
     (t?'<button class="btn danger" type="button" data-act="del" id="f_del">Xóa bỏ</button>':'')+'</div></form>';
