@@ -340,6 +340,13 @@ input::-webkit-datetime-edit{padding:0}
 #sheet select{min-width:0;max-width:100%;text-overflow:ellipsis}
 #sheet .panel{overflow-x:hidden}
 input[type=date],input[type=datetime-local]{white-space:nowrap;overflow:hidden}
+.lrow{display:flex;align-items:flex-end;justify-content:space-between;gap:8px}
+.lrow label{flex:1}
+.mic{background:none;border:0;color:var(--accent-h);font-size:13px;font-weight:700;min-height:44px;padding:0 4px;margin-bottom:-6px;white-space:nowrap}
+.mic:hover{text-decoration:underline}
+.mic.rec,.btn.rec{color:var(--danger);animation:pulse 1.2s ease-in-out infinite}
+.btn.ghost.rec{border-color:#FECACA;background:var(--danger-soft)}
+@keyframes pulse{50%{opacity:.55}}
 </style>
 </head>
 <body>
@@ -721,7 +728,7 @@ function viewDash(){
 function viewNotes(){
   var list=all('note').sort(function(a,b){return b.createdAt-a.createdAt;});
   var h='<div class="ngrid"><form data-form="note"><textarea id="n_text" data-keep placeholder="Ghi chú" aria-label="Ghi chú"></textarea>'+
-    '<div class="row"><button class="btn" type="submit">Lưu lại</button></div></form><div>';
+    '<div class="row"><button class="btn" type="submit">Lưu lại</button>'+micBtn('n_text','btn ghost')+'</div></form><div>';
   h+=list.length?secHtml('Đã lưu',list.length):'<div class="empty">Chưa có ghi chú</div>';
   h+=list.map(function(n){
     return '<div class="note"><div class="tx">'+esc(n.title)+'</div><div class="ft"><span class="tmn">'+fmtTime(n.createdAt)+' '+fmtShort(ymd(new Date(n.createdAt)))+'</span>'+
@@ -782,7 +789,7 @@ function openCust(c){
     '<div><label for="c_ph">Điện thoại</label><input type="text" id="c_ph" inputmode="tel" value="'+esc(v.phone)+'" autocomplete="off"></div></div>'+
     '<label for="c_st">Trạng thái</label><select id="c_st">'+CSTAT.map(function(x){ return '<option value="'+x[0]+'"'+(v.status===x[0]?' selected':'')+'>'+x[1]+'</option>'; }).join('')+'</select>'+
     '<label for="c_no">Ghi chú</label><textarea id="c_no">'+esc(v.note)+'</textarea>'+
-    (c?'<label for="c_lg">Nhật ký liên hệ</label><textarea id="c_lg" placeholder="Nội dung lần liên hệ này"></textarea>'+
+    (c?'<div class="lrow"><label for="c_lg">Nhật ký liên hệ</label>'+micBtn('c_lg')+'</div><textarea id="c_lg" placeholder="Nội dung lần liên hệ này"></textarea>'+
       '<div class="row" style="margin-top:8px"><button class="btn ghost small" type="button" data-act="logc">Ghi nhật ký</button></div>'+
       (logs.length?'<div class="clog">'+logs.map(function(g){ return '<div><span>'+fmtShort(ymd(new Date(g.t)))+'</span>'+esc(g.x||'Liên hệ')+'</div>'; }).join('')+'</div>':''):'')+
     '<div class="err" id="c_err"></div>'+
@@ -886,8 +893,8 @@ function openForm(t,defDate,defProj,defDl){
   var v=t||{title:'',note:'',date:defDate||ui.cur,deadline:defDl||'',prio:2,remind:'',projectId:defProj||((ui.proj&&ui.proj!=='-')?ui.proj:'')};
   var cs=t?st(t):'todo', ps=all('project');
   $panel.innerHTML='<h2>'+(t?'Sửa việc':'Việc mới')+'</h2><form data-form="task">'+
-    '<label for="f_title">Tên gọi</label><input type="text" id="f_title" value="'+esc(v.title)+'" autocomplete="off">'+
-    '<label for="f_note">Ghi chú</label><textarea id="f_note">'+esc(v.note)+'</textarea>'+
+    '<div class="lrow"><label for="f_title">Tên gọi</label>'+micBtn('f_title')+'</div><input type="text" id="f_title" value="'+esc(v.title)+'" autocomplete="off">'+
+    '<div class="lrow"><label for="f_note">Ghi chú</label>'+micBtn('f_note')+'</div><textarea id="f_note">'+esc(v.note)+'</textarea>'+
     '<div class="two"><div><label for="f_date">Ngày làm</label><input type="date" id="f_date" value="'+esc(v.date)+'"></div>'+
     '<div><label for="f_prio">Ưu tiên</label><select id="f_prio">'+prioOptions(v.prio)+'</select></div></div>'+
     '<label for="f_dl">Hạn chót</label><input type="datetime-local" id="f_dl" value="'+esc(v.deadline)+'">'+
@@ -900,7 +907,7 @@ function openForm(t,defDate,defProj,defDl){
   $sheet.className='open';
   if(!t) setTimeout(function(){ var el=document.getElementById('f_title'); if(el) el.focus(); },50);
 }
-function closeForm(){ $sheet.className=''; $panel.innerHTML=''; editId=null; }
+function closeForm(){ stopMic(); $sheet.className=''; $panel.innerHTML=''; editId=null; }
 function saveForm(){
   var title=document.getElementById('f_title').value.trim();
   var dl=document.getElementById('f_dl').value, rm=document.getElementById('f_rm').value, date=document.getElementById('f_date').value;
@@ -912,6 +919,27 @@ function saveForm(){
   var ns=document.getElementById('f_st').value;
   if(editId && items[editId]){ var t=items[editId]; for(var k in o) t[k]=o[k]; if(st(t)!==ns) setStatus(t,ns); closeForm(); commit(t); }
   else { o.status=ns; closeForm(); addTask(o); }
+}
+
+/* ---------- Nhap bang giong noi ---------- */
+var SR=window.SpeechRecognition||window.webkitSpeechRecognition, rec=null, recT=null;
+function micBtn(t,cls){ return SR?'<button type="button" class="'+(cls||'mic')+'" data-act="mic" data-t="'+t+'" aria-label="Nói để nhập">'+(recT===t?'Dừng nghe':'Giọng nói')+'</button>':''; }
+function micUI(){ Array.prototype.forEach.call(document.querySelectorAll('[data-act=mic]'),function(b){
+  var on=b.getAttribute('data-t')===recT; b.textContent=on?'Dừng nghe':'Giọng nói'; b.classList.toggle('rec',on); }); }
+function stopMic(){ if(rec){ try{ rec.stop(); }catch(e){} } }
+function startMic(t){
+  var el=document.getElementById(t); if(!el||!SR) return;
+  if(rec){ var same=recT===t; stopMic(); if(same) return; }
+  var base=el.value, r=new SR(); rec=r; recT=t;
+  r.lang='vi-VN'; r.interimResults=true; r.continuous=false; r.maxAlternatives=1;
+  r.onresult=function(e){ var txt=''; for(var i=0;i<e.results.length;i++) txt+=e.results[i][0].transcript;
+    var x=document.getElementById(t); if(!x) return;
+    x.value=base+(base&&!/\s$/.test(base)?' ':'')+txt.trim(); };
+  r.onerror=function(e){ if(e.error==='not-allowed'||e.error==='service-not-allowed') toast('Chưa cho phép micro','Bật quyền micro cho trình duyệt trong Cài đặt của máy.');
+    else if(e.error!=='no-speech'&&e.error!=='aborted') toast('Không nhận được giọng nói',''); };
+  r.onend=function(){ if(rec===r){ rec=null; recT=null; } micUI(); var x=document.getElementById(t); if(x) x.focus(); };
+  try{ r.start(); }catch(e){ rec=null; recT=null; toast('Không bật được micro',''); }
+  micUI();
 }
 
 /* ---------- Tooltip bieu do ---------- */
@@ -977,6 +1005,7 @@ document.addEventListener('click',function(e){
       if(b.getAttribute('data-armed')){ ui.openProj=null; removeItem(id); } else { b.setAttribute('data-armed','1'); b.textContent='Xác nhận?'; }
       break;
     case 'edit': if(it) openForm(it); break;
+    case 'mic': startMic(b.getAttribute('data-t')); break;
     case 'editc': if(it) openCust(it); break;
     case 'hnew':
       if(ui.tab==='cust') openCust(null);
