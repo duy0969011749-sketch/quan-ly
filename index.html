@@ -172,8 +172,8 @@ nav button.on{color:var(--text);font-weight:600;box-shadow:inset 0 2px 0 var(--i
 .et{font-size:14px;font-weight:500;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .ev.done .et{text-decoration:line-through}
 .em{font-size:12px;line-height:1.25;color:var(--muted);font-variant-numeric:tabular-nums}
-.now{position:absolute;left:54px;right:0;height:0;border-top:2px solid var(--danger);pointer-events:none;z-index:2}
-.now::before{content:"";position:absolute;left:-5px;top:-6px;width:10px;height:10px;border-radius:50%;background:var(--danger)}
+.nowln{position:absolute;left:54px;right:0;height:0;border-top:2px solid var(--danger);pointer-events:none;z-index:2}
+.nowln::before{content:"";position:absolute;left:-5px;top:-6px;width:10px;height:10px;border-radius:50%;background:var(--danger)}
 .fold .fb{display:block}
 .fold.hide:not(.open) .fl{display:none}
 .fold.cap:not(.open) .fl .task:nth-child(n+3){display:none}
@@ -402,7 +402,7 @@ function viewDay(){
   }).join('');
   var now='';
   if(d===today()){ var n0=new Date(), ny=(n0.getHours()+n0.getMinutes()/60-lo)*HOUR;
-    if(ny>=0 && ny<=H) now='<div class="now" id="nowline" data-lo="'+lo+'" style="top:'+ny.toFixed(1)+'px"></div>'; }
+    if(ny>=0 && ny<=H) now='<div class="nowln" id="nowline" data-lo="'+lo+'" style="top:'+ny.toFixed(1)+'px"></div>'; }
   var tl='<div class="o3 tlwrap" id="tlwrap" data-y8="'+Math.max(0,(7-lo)*HOUR)+'"><div class="tl" style="height:'+(H+24)+'px">'+rows+'<div class="evs">'+evh+'</div>'+now+'</div></div>';
   return '<div class="cols"><div>'+tl+'</div><div>'+q+ad+ton+'</div></div>';
 }
