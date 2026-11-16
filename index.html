@@ -916,7 +916,10 @@ document.addEventListener('click',function(e){
   switch(act){
     case 'prev': ui.cur=monthStep()?addMonths(ui.cur,-1):addDays(ui.cur,-step); ui.scrollNow=true; render(); break;
     case 'next': ui.cur=monthStep()?addMonths(ui.cur,1):addDays(ui.cur,step); ui.scrollNow=true; render(); break;
-    case 'mcell': ui.cur=b.getAttribute('data-d'); render(); break;
+    case 'mcell':
+      ui.cur=b.getAttribute('data-d'); render();
+      if(!window.matchMedia('(max-width:599px)').matches) openForm(null,ui.cur);
+      break;
     case 'today': ui.cur=today(); ui.scrollNow=true; render(); break;
     case 'goday': ui.cur=b.getAttribute('data-d'); render(); break;
     case 'toggle': if(it){ setStatus(it,it.done?'todo':'done'); commit(it); } break;
